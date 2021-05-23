@@ -3,31 +3,60 @@ library(modelr)
 library(scatterplot3d)
 library(readr,dplyr)
 library(ggplot2)
-library(ISLR)
 library(caret)
 library(rsample)
 
-Analysis <- read_csv("/Users/bogdanpastiu/Desktop/bigdata/dataset/breast_cancer_data.csv")
+Analysis <- read_csv("/Users/bogdanpastiu/Desktop/bigdata/dataset/breast_cancer_data2.csv")
 # TODO data cleanup
 
+Analysis$diagnosis <- as.factor(Analysis$diagnosis) # convert diagnosis from chr to fct
+
 Analysis %>%
-  ggplot(aes(mean_radius, mean_area, color=diagnosis)) + geom_point() # graph displaying correclation between radius and area
+  ggplot(aes(mean_radius, mean_area, color=diagnosis, shape=diagnosis)) + geom_point() # graph displaying correclation between radius and area
  
 Analysis %>%
-  ggplot(aes(mean_perimeter, mean_texture, color=diagnosis)) + geom_point() + geom_smooth() # graph displaying correclation between perimeter and texture
+  ggplot(aes(mean_perimeter, mean_texture, color=diagnosis, shape=diagnosis)) + geom_point() + geom_smooth() # graph displaying correclation between perimeter and texture
 
 Analysis %>%
-  ggplot(aes(mean_radius, mean_perimeter, color=diagnosis)) + geom_point() + geom_smooth() # graph displaying correclation between radius and perimeter
+  ggplot(aes(mean_texture, mean_smoothness, color=diagnosis, shape=diagnosis)) + geom_point() + geom_boxplot() # graph displaying correclation between radius and perimeter
 
-split=sample.split(Analysis$diagnosis,SplitRatio=0.65)
-Analysis<-Analysis[-33]
-training_set<-subset(Analysis,split==T)
-View(training_set)
-test_set<-subset(Analysis,split==F)
-View(test_set)
+ggplot(Analysis) + 
+  geom_boxplot(aes(x = diagnosis, y = mean_area, fill = diagnosis)) + theme(text = element_text(size=20)) # boxplot graph for area corelation with diagnostic
 
-bc_reg<-glm(data = Analysis, diagnosis ~ mean_radius + mean_area + mean_perimeter + mean_smoothness, family = binomial)
-summary(bc_reg)
+ggplot(Analysis) + 
+  geom_boxplot(aes(x = diagnosis, y = mean_smoothness, fill = diagnosis)) + theme(text = element_text(size=20)) # boxplot graph for smoothness corelation with diagnostisc
+
+ggplot(Analysis) + 
+  geom_boxplot(aes(x = diagnosis, y = mean_radius, fill = diagnosis)) + theme(text = element_text(size=20)) # boxplot graph for radius corelation with diagnostisc
+
+ggplot(Analysis) + 
+  geom_boxplot(aes(x = diagnosis, y = mean_texture, fill = diagnosis)) + theme(text = element_text(size=20)) # boxplot graph for texture corelation with diagnostisc
+
+ggplot(Analysis) + 
+  geom_boxplot(aes(x = diagnosis, y = mean_perimeter, fill = diagnosis)) + theme(text = element_text(size=20)) # boxplot graph for perimeter corelation with diagnostisc
+
+by_diagnosis <- group_by(Analysis, diagnosis)
+summarize(by_diagnosis, count = n()) # count occurences in the dataset
+
+# model de regresie logistica, diagnosis in functie de mean_perimeter
+mod_perimeter <- glm(data = Analysis, diagnosis ~ mean_perimeter, family = binomial) # cu cat mean_parameter e mai mic cu atata sansa e sa fie Benign si cu cat creste sansa e sa fie Malign
+summary(mod_perimeter)
+
+grid <- Analysis %>%
+  data_grid(mean_perimeter = seq_range(mean_perimeter, 100)) %>%   # facem o prezicere punand un range de 100 de valori al lui mean_parameter din dataSet
+  add_predictions(mod_perimeter, "prob_default", type = "response")
+
+ggplot() + 
+  geom_line(data = grid, aes(mean_perimeter, prob_default), color = "red", size = 2) # graficul care ne arata predictul
+
+nd <- tribble(~mean_perimeter, 40, 120)  # predicted pentru 2 valori
+predicted <- predict(mod_perimeter, newdata = nd, type = "response")
+predicted
+
+# model de regreie logistica, diagnosis in functie de mean_smoothness 
+mod_smoothness <- glm(data = Analysis, diagnosis ~ mean_smoothness, family = binomial) # cu cat mean_parameter e mai mic cu atata sansa e sa fie Benign si cu cat creste sansa e sa fie Malign
+summary(mod_smoothness)
+
 
 
 
