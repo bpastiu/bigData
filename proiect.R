@@ -5,6 +5,7 @@ library(readr,dplyr)
 library(ggplot2)
 library(caret)
 library(rsample)
+library(ISLR)
 
 Analysis <- read_csv("/Users/bogdanpastiu/Desktop/bigdata/dataset/breast_cancer_data2.csv")
 # TODO data cleanup
@@ -82,7 +83,7 @@ predicted <- predict(mod_area, newdata = nd, type = "response")
 
 # model de regreie logistica, diagnosis in functie de diagnosis
 mod_radius <- glm(data = Analysis, diagnosis ~ mean_radius, family = binomial)
-summary(mod_diagnosis)
+summary(mod_radius)
 
 grid <- Analysis %>%
   data_grid(mean_radius = seq_range(mean_radius, 100)) %>%
@@ -94,5 +95,52 @@ ggplot() +
 nd <- tribble(~mean_radius, 10, 20)
 predicted <- predict(mod_radius, newdata = nd, type = "response") 
 
+# toate predictiile
+mod_all <- glm(data = Analysis, diagnosis ~ mean_perimeter + mean_smoothness + mean_area + mean_radius, family = binomial)
+summary(mod_all)
+# p foarte mic spune ca e ok in regresie
+# p foarte mare spune ca nu ar trebui sa fie acolo
+# beta pozitiv, spune ca daca creste unul dintre mean_<ceva> va creste probabilitatea
+# mean_radius cu semn negativ? - cofounding? - schimba sensul predictiei
+
+# perform clasification
+set.seed(123)
+split <- initial_split(Analysis, prop = 0.7, strata = "diagnosis")
+train <- training(split)
+test <- testing(split)
+
+mod_area_train <- glm(data = train, diagnosis ~ mean_perimeter + mean_area, family = binomial)
+summary(mod_area_train)
+
+pred_test <- predict(mod_area_train, newdata = test, type = "response")
+table(pred_test > 0.7, test$diagnosis)
+
+# performa clasification analysis with caret
+set.seed(123)
+split <- initial_split(Analysis, prop = 0.7, strata = "diagnosis")
+train <- training(split)
+test <- testing(split)
+table(test$diagnosis)
+table(train$diagnosis)
+
+features <- setdiff(names(Analysis),  "diagnosis")
+x <- train[, features]
+y <- train$diagnosis
+
+fitControl <- trainControl(
+  method = "cv",
+  number = 10
+)
+modGLM_all <- train(
+  x=x,
+  y=y,
+  method = "glm",
+  family = "binomial",
+  trControl = fitControl
+)
+modGLM_all
+confusionMatrix(modGLM_all)
+pred_all = predict(modGLM_all, newdata = test, type = "raw")
+confusionMatrix(pred_all, test$diagnosis)
 
 
