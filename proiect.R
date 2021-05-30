@@ -51,12 +51,48 @@ ggplot() +
 
 nd <- tribble(~mean_perimeter, 40, 120)  # predicted pentru 2 valori
 predicted <- predict(mod_perimeter, newdata = nd, type = "response")
-predicted
 
 # model de regreie logistica, diagnosis in functie de mean_smoothness 
 mod_smoothness <- glm(data = Analysis, diagnosis ~ mean_smoothness, family = binomial) # cu cat mean_parameter e mai mic cu atata sansa e sa fie Benign si cu cat creste sansa e sa fie Malign
 summary(mod_smoothness)
 
+grid <- Analysis %>%
+  data_grid(mean_smoothness = seq_range(mean_smoothness, 100)) %>%
+  add_predictions(mod_smoothness, "prob_diagnosis", type="response")
+
+ggplot() +
+  geom_line(data = grid, aes(mean_smoothness, prob_diagnosis), color = "red", size = 2) 
+
+nd <- tribble(~mean_smoothness, 0.05, 0.150)
+predicted <- predict(mod_smoothness, newdata = nd, type = "response") 
+
+# model de regreie logistica, diagnosis in functie de mean_area
+mod_area <- glm(data = Analysis, diagnosis ~ mean_area, family = binomial) #
+summary(mod_area)
+
+grid <- Analysis %>%
+  data_grid(mean_area = seq_range(mean_area, 100)) %>%
+  add_predictions(mod_area, "prob_diagnosis", type="response")
+
+ggplot() +
+  geom_line(data = grid, aes(mean_area, prob_diagnosis), color = "red", size = 2) 
+
+nd <- tribble(~mean_area, 500, 1000)
+predicted <- predict(mod_area, newdata = nd, type = "response") 
+
+# model de regreie logistica, diagnosis in functie de diagnosis
+mod_radius <- glm(data = Analysis, diagnosis ~ mean_radius, family = binomial)
+summary(mod_diagnosis)
+
+grid <- Analysis %>%
+  data_grid(mean_radius = seq_range(mean_radius, 100)) %>%
+  add_predictions(mod_radius, "prob_diagnosis", type="response")
+
+ggplot() +
+  geom_line(data = grid, aes(mean_radius, prob_diagnosis), color = "red", size = 2) 
+
+nd <- tribble(~mean_radius, 10, 20)
+predicted <- predict(mod_radius, newdata = nd, type = "response") 
 
 
 
