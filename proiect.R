@@ -4,6 +4,8 @@ library(scatterplot3d)
 library(readr,dplyr)
 library(ggplot2)
 library(caret)
+library(rpart)
+library(rpart.plot)
 library(rsample)
 library(ISLR)
 
@@ -142,5 +144,16 @@ modGLM_all
 confusionMatrix(modGLM_all)
 pred_all = predict(modGLM_all, newdata = test, type = "raw")
 confusionMatrix(pred_all, test$diagnosis)
+
+# arbore
+m1 <- rpart(
+  formula = diagnosis ~.,
+  data = Analysis,
+  method = "anova"
+)
+m1 # afisarea arborelui rezultat (in mod text)
+rpart.plot(m1) # afisarea grafica a arborelui
+
+
 
 
